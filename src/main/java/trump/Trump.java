@@ -1,11 +1,19 @@
 package trump;
+import java.util.Scanner;
 
 public class Trump {
     public static void main(String[] args) {
-       displayWelcome();
-       displayGoodbye();
-
-
+        displayWelcome();
+        Scanner scanner = new Scanner(System.in);
+        while(true) {
+            String userInput = getInput(scanner);
+            displayInput(userInput);
+            if(userInput.equalsIgnoreCase("bye")) {
+                displayGoodbye();
+                scanner.close();
+                break;
+            }
+        }
     }
 
     public static void displayWelcome() {
@@ -20,6 +28,17 @@ public class Trump {
         System.out.println("-------------------------------------------------------------------------------------------");
         System.out.println("I’m Donald Trump and we’re going to make your productivity great again!");
 
+    }
+
+    public static String getInput(Scanner scanner) {
+        System.out.println("-------------------------------------------------------------------------------------------");
+        String userInput = scanner.next();
+        return userInput;
+    }
+
+    public static void displayInput(String userInput) {
+        System.out.println("-------------------------------------------------------------------------------------------");
+        System.out.println(userInput);
     }
 
     public static void displayGoodbye() {
