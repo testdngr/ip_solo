@@ -15,7 +15,8 @@ IF ERRORLEVEL 1 (
 REM no error here, errorlevel == 0
 
 REM run the program, feed commands from input.txt file and redirect the output to the ACTUAL.TXT
-java -classpath "C:\D Drive\Life\IP\ip_solo\bin" Trump.class < input.txt > ACTUAL.TXT
+java -cp "C:\D Drive\Life\IP\ip_solo\bin" trump.Trump < input.txt > ACTUAL.TXT 2>&1
+
 
 REM compare the output to the expected output
 FC ACTUAL.TXT EXPECTED.TXT
