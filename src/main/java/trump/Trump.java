@@ -1,26 +1,30 @@
 package trump;
+import trump.task.Task;
 import java.util.Scanner;
 
 public class Trump {
     public static void main(String[] args) {
+        Trump trump = new Trump();
+        trump.run();
+    }
+
+    private final Scanner scanner;
+    private Task[] tasklist;
+    private int taskIndex;
+    private boolean isExit;
+
+    public Trump() {
+        this.scanner = new Scanner(System.in);
+        this.tasklist = new Task[100];
+        this.taskIndex = 0;
+        this.isExit = false;
+    }
+
+    public void run() {
         displayWelcome();
-        Scanner scanner = new Scanner(System.in);
-        String[] tasklist = new String[100];
-        int taskIndex = 0;
-
-        while(true) {
-            String userInput = getInput(scanner);
-
-            if(userInput.equalsIgnoreCase("bye")) {
-                displayGoodbye();
-                scanner.close();
-                break;
-            } else if (userInput.equalsIgnoreCase("list")) {
-                listTask(tasklist);
-            } else {
-                addTask(userInput, tasklist, taskIndex);
-                taskIndex++;
-            }
+        while(!this.isExit) {
+            String userInput = getInput();
+            this.isExit = processInput(userInput);
         }
     }
 
@@ -35,12 +39,41 @@ public class Trump {
         System.out.println("Hello from\n" + logo);
         System.out.println("-------------------------------------------------------------------------------------------");
         System.out.println("I’m Donald Trump and we’re going to make your productivity great again!");
-
     }
 
-    public static String getInput(Scanner scanner) {
+    public boolean processInput(String userInput) {
+        String[] inputParts = userInput.strip().split(" ");
+        return switch (inputParts[0].toLowerCase()) {
+            case "bye" -> {
+                displayGoodbye();
+                this.scanner.close();
+                yield true;
+            }
+            case "list" -> {
+                listTask();
+                yield false;
+            }
+            case "mark" -> {
+                int index = Integer.parseInt(inputParts[1]) - 1;
+                markTask(index);
+                yield false;
+            }
+            case "unmark" -> {
+                int index = Integer.parseInt(inputParts[1]) - 1;
+                unmarkTask(index);
+                yield false;
+            }
+            default -> {
+                addTask(userInput);
+                yield false;
+            }
+        };
+    }
+
+
+    public String getInput() {
         System.out.println("-------------------------------------------------------------------------------------------");
-        String userInput = scanner.nextLine();
+        String userInput = this.scanner.nextLine();
         return userInput;
     }
 
@@ -50,18 +83,36 @@ public class Trump {
         System.out.println("-------------------------------------------------------------------------------------------");
     }
 
-    public static String[] addTask(String userInput, String[] tasklist, int taskIndex) {
-        tasklist[taskIndex] = userInput;
+    public void addTask(String userInput) {
+        Task t = new Task(userInput);
+        this.tasklist[this.taskIndex] = t;
         System.out.println("-------------------------------------------------------------------------------------------");
         System.out.println("Added: " + userInput);
-        return tasklist;
+        this.taskIndex++;
     }
 
-    public static void listTask(String[] tasklist) {
-        for(int i = 0; i < tasklist.length; i++) {
-            if(tasklist[i] != null) {
-                System.out.println(i + 1 + ". " + tasklist[i]);
+    public void listTask() {
+        System.out.println("-------------------------------------------------------------------------------------------");
+        for(int i = 0; i < this.tasklist.length; i++) {
+            if(this.tasklist[i] != null) {
+                System.out.println(i + 1 + "." + this.tasklist[i].toString());
             }
         }
     }
+
+    public void markTask(int index) {
+        this.tasklist[index].markAsDone();
+        System.out.println("-------------------------------------------------------------------------------------------");
+        System.out.println("Congratulative message");
+        System.out.println(this.tasklist[index].toString());
+    }
+
+    public void unmarkTask(int index) {
+        this.tasklist[index].markAsNotDone();
+        System.out.println("-------------------------------------------------------------------------------------------");
+        System.out.println("Noted message");
+        System.out.println(this.tasklist[index].toString());
+    }
+
+
 }

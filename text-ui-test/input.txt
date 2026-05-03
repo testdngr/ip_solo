@@ -1,4 +1,12 @@
-read book
-mark students booklet
+watch tv
+eat banana
 list
+mark 1
+list
+do homework w
+list
+mark 3
+list
+Unmark 3
+LIST
 bye
