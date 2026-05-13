@@ -1,5 +1,7 @@
 package trump;
-import trump.task.Task;
+
+import trump.task.*;
+
 import java.util.Scanner;
 
 public class Trump {
@@ -42,7 +44,7 @@ public class Trump {
     }
 
     public boolean processInput(String userInput) {
-        String[] inputParts = userInput.strip().split(" ");
+        String[] inputParts = userInput.strip().split(" ", 2);
         return switch (inputParts[0].toLowerCase()) {
             case "bye" -> {
                 displayGoodbye();
@@ -63,8 +65,13 @@ public class Trump {
                 unmarkTask(index);
                 yield false;
             }
+            case "todo", "deadline", "event" -> {
+                addTask(inputParts);
+                yield false;
+            }
             default -> {
-                addTask(userInput);
+                System.out.println("-------------------------------------------------------------------------------------------");
+                System.out.println("I dont know whats " + inputParts[0]);
                 yield false;
             }
         };
@@ -83,7 +90,7 @@ public class Trump {
         System.out.println("-------------------------------------------------------------------------------------------");
     }
 
-    public void addTask(String userInput) {
+    public void addTask2(String userInput) {
         Task t = new Task(userInput);
         this.tasklist[this.taskIndex] = t;
         System.out.println("-------------------------------------------------------------------------------------------");
@@ -93,6 +100,7 @@ public class Trump {
 
     public void listTask() {
         System.out.println("-------------------------------------------------------------------------------------------");
+        System.out.println("Here are the tasks in your big league list:");
         for(int i = 0; i < this.tasklist.length; i++) {
             if(this.tasklist[i] != null) {
                 System.out.println(i + 1 + "." + this.tasklist[i].toString());
@@ -103,16 +111,49 @@ public class Trump {
     public void markTask(int index) {
         this.tasklist[index].markAsDone();
         System.out.println("-------------------------------------------------------------------------------------------");
-        System.out.println("Congratulative message");
+        System.out.println("Total victory on that task. Nobody finishes like you do. Big league!");
         System.out.println(this.tasklist[index].toString());
     }
 
     public void unmarkTask(int index) {
         this.tasklist[index].markAsNotDone();
         System.out.println("-------------------------------------------------------------------------------------------");
-        System.out.println("Noted message");
+        System.out.println("Listen, I’m putting this back on the list because it’s not finished yet, but when we do it, it’s going to be tremendous!");
         System.out.println(this.tasklist[index].toString());
     }
 
+    public void addTask(String[] taskInfo) {
+        String taskType = taskInfo[0].toLowerCase();
+        String rawData = taskInfo[1];
+        Task newTask = switch (taskType) {
+            case "todo" -> new Todo(rawData);
+            case "deadline" -> {
+                String[] parts = rawData.split(" /by ");
+                String description = parts[0];
+                String by = parts[1];
+                yield new Deadline(description, by);
+            }
+            default -> {
+                String[] parts = rawData.split(" /from ");
+                String description = parts[0];
+
+                String[] timeParts = parts[1].split(" /to ");
+                String from = timeParts[0];
+                String to = timeParts[1];
+
+                yield new Event(description, from, to);
+            }
+        };
+        this.tasklist[this.taskIndex] = newTask;
+        displayAddTask();
+        taskIndex++;
+}
+
+    public void displayAddTask() {
+        System.out.println("-------------------------------------------------------------------------------------------");
+        System.out.println("Message of adding task");
+        System.out.println("Added: " + tasklist[taskIndex].toString());
+        System.out.println("Message of how many task in list");
+    }
 
 }

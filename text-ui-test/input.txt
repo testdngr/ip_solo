@@ -1,12 +1,9 @@
-watch tv
-eat banana
+todo eat banana
+list
+todo watch tv
 list
 mark 1
 list
-do homework w
+unmark 1
 list
-mark 3
-list
-Unmark 3
-LIST
 bye
