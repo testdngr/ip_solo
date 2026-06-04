@@ -3,8 +3,11 @@ package trump;
 import trump.task.*;
 
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Trump {
+
     public static void main(String[] args) {
         Trump trump = new Trump();
         trump.run();
@@ -25,8 +28,13 @@ public class Trump {
     public void run() {
         displayWelcome();
         while(!this.isExit) {
-            String userInput = getInput();
-            this.isExit = processInput(userInput);
+            try {
+                String userInput = getInput();
+                this.isExit = processInput(userInput);
+            }
+            catch (TrumpException e) {
+                displayError(e);
+            }
         }
     }
 
@@ -65,8 +73,19 @@ public class Trump {
                 unmarkTask(index);
                 yield false;
             }
-            case "todo", "deadline", "event" -> {
-                addTask(inputParts);
+            case "todo" -> {
+                if(inputParts.length != 2) {
+                    throw new TrumpException("Add task description...");
+                }
+                addTask("todo", inputParts[1]);
+                yield false;
+            }
+            case "deadline" -> {
+                addTask("deadline", inputParts[1]);
+                yield false;
+            }
+            case "event" -> {
+                addTask("event", inputParts[1]);
                 yield false;
             }
             default -> {
@@ -88,14 +107,6 @@ public class Trump {
         System.out.println("-------------------------------------------------------------------------------------------");
         System.out.println("Get back to work soon, we have a lot of winning left to do—it's going to be huge!");
         System.out.println("-------------------------------------------------------------------------------------------");
-    }
-
-    public void addTask2(String userInput) {
-        Task t = new Task(userInput);
-        this.tasklist[this.taskIndex] = t;
-        System.out.println("-------------------------------------------------------------------------------------------");
-        System.out.println("Added: " + userInput);
-        this.taskIndex++;
     }
 
     public void listTask() {
@@ -122,26 +133,30 @@ public class Trump {
         System.out.println(this.tasklist[index].toString());
     }
 
-    public void addTask(String[] taskInfo) {
-        String taskType = taskInfo[0].toLowerCase();
-        String rawData = taskInfo[1];
+    public void addTask(String taskType, String taskInfo) throws TrumpException{
         Task newTask = switch (taskType) {
-            case "todo" -> new Todo(rawData);
+            case "todo" -> new Todo(taskInfo);
             case "deadline" -> {
-                String[] parts = rawData.split(" /by ");
+                String[] parts = taskInfo.split(" /by ");
                 String description = parts[0];
                 String by = parts[1];
                 yield new Deadline(description, by);
             }
             default -> {
-                String[] parts = rawData.split(" /from ");
-                String description = parts[0];
+                String regex = "^(.+?)\\s+/from\\s+(.+?)\\s+/to\\s+(.+)$";
 
-                String[] timeParts = parts[1].split(" /to ");
-                String from = timeParts[0];
-                String to = timeParts[1];
+                Pattern pattern = Pattern.compile(regex);
+                Matcher matcher = pattern.matcher(taskInfo);
 
-                yield new Event(description, from, to);
+                if(matcher.matches()) {
+                    String description = matcher.group(1).trim();
+                    String from = matcher.group(2).trim();
+                    String to = matcher.group(3).trim();
+                    yield new Event(description, from, to);
+                }
+
+                throw new TrumpException("Event Format wrong...");
+
             }
         };
         this.tasklist[this.taskIndex] = newTask;
@@ -154,6 +169,11 @@ public class Trump {
         System.out.println("Message of adding task");
         System.out.println("Added: " + tasklist[taskIndex].toString());
         System.out.println("Message of how many task in list");
+    }
+
+    public void displayError(TrumpException e) {
+        System.out.println("-------------------------------------------------------------------------------------------");
+        System.err.println(e.getMessage());
     }
 
 }

@@ -1,20 +1,10 @@
-todo read book
-list
-deadline eat banana /by June 4th 6pm
-list
-event shit /from June 9th /to June 10th
-list
 todo
 deadline
-event kill /to June 9th /from May 3rd
-deadline /by June 3rd eat shit
-mark 44
-unmark 1
-lol
-mark 0
-unmark -1
-mark kkk
-unmark jjj
-mark
+event
 todo
-bye
+deadline
+event
+todo
+deadline
+event
+
