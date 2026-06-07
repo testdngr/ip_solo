@@ -27,12 +27,11 @@ public class Trump {
 
     public void run() {
         displayWelcome();
-        while(!this.isExit) {
+        while (!this.isExit) {
             try {
                 String userInput = getInput();
                 this.isExit = processInput(userInput);
-            }
-            catch (TrumpException e) {
+            } catch (InvalidInputException e) {
                 displayError(e);
             }
         }
@@ -40,11 +39,11 @@ public class Trump {
 
     public static void displayWelcome() {
         String logo = """
-             _________  ____  __  ___  ____
-            /_  __/ _ \\/ / / /  |/  / _ \\_ \\
-             / / / , _/ /_/ / /|_/ / ___/_/
-            /_/ /_/|_|\\____/_/  /_/_/ (_)
-            """;
+                 _________  ____  __  ___  ____
+                /_  __/ _ \\/ / / /  |/  / _ \\_ \\
+                 / / / , _/ /_/ / /|_/ / ___/_/
+                /_/ /_/|_|\\____/_/  /_/_/ (_)
+                """;
 
         System.out.println("Hello from\n" + logo);
         System.out.println("-------------------------------------------------------------------------------------------");
@@ -53,7 +52,17 @@ public class Trump {
 
     public boolean processInput(String userInput) {
         String[] inputParts = userInput.strip().split(" ", 2);
-        return switch (inputParts[0].toLowerCase()) {
+        String command = inputParts[0].toLowerCase();
+
+        boolean needsArguments = switch (command) {
+            case "mark", "unmark", "todo", "deadline", "event" -> true;
+            default -> false;
+        };
+
+        if (needsArguments && inputParts.length < 2) {
+            throw new InvalidInputException("Excuse me, you forgot the details for the '" + command + "' command. It's empty!");
+        }
+        return switch (command) {
             case "bye" -> {
                 displayGoodbye();
                 this.scanner.close();
@@ -64,33 +73,20 @@ public class Trump {
                 yield false;
             }
             case "mark" -> {
-                int index = Integer.parseInt(inputParts[1]) - 1;
-                markTask(index);
+                markTask(parseTaskNumber(inputParts[1]));
                 yield false;
             }
             case "unmark" -> {
-                int index = Integer.parseInt(inputParts[1]) - 1;
-                unmarkTask(index);
+                unmarkTask(parseTaskNumber(inputParts[1]));
                 yield false;
             }
-            case "todo" -> {
-                if(inputParts.length != 2) {
-                    throw new TrumpException("Add task description...");
-                }
-                addTask("todo", inputParts[1]);
-                yield false;
-            }
-            case "deadline" -> {
-                addTask("deadline", inputParts[1]);
-                yield false;
-            }
-            case "event" -> {
-                addTask("event", inputParts[1]);
+            case "todo", "deadline", "event" -> {
+                addTask(command, inputParts[1]);
                 yield false;
             }
             default -> {
                 System.out.println("-------------------------------------------------------------------------------------------");
-                System.out.println("I dont know whats " + inputParts[0]);
+                System.out.println("I don't know what \"" + command + "\" is. Nobody knows.");
                 yield false;
             }
         };
@@ -112,8 +108,8 @@ public class Trump {
     public void listTask() {
         System.out.println("-------------------------------------------------------------------------------------------");
         System.out.println("Here are the tasks in your big league list:");
-        for(int i = 0; i < this.tasklist.length; i++) {
-            if(this.tasklist[i] != null) {
+        for (int i = 0; i < this.tasklist.length; i++) {
+            if (this.tasklist[i] != null) {
                 System.out.println(i + 1 + "." + this.tasklist[i].toString());
             }
         }
@@ -133,47 +129,84 @@ public class Trump {
         System.out.println(this.tasklist[index].toString());
     }
 
-    public void addTask(String taskType, String taskInfo) throws TrumpException{
+    public void addTask(String taskType, String taskInfo) {
         Task newTask = switch (taskType) {
-            case "todo" -> new Todo(taskInfo);
-            case "deadline" -> {
-                String[] parts = taskInfo.split(" /by ");
-                String description = parts[0];
-                String by = parts[1];
-                yield new Deadline(description, by);
+            case "todo" -> {
+                String checkFlags = taskInfo.toLowerCase();
+                if (!checkFlags.contains("/from") && !checkFlags.contains("/to") && !checkFlags.contains("/by")) {
+                    yield new Todo(taskInfo);
+                }
+                throw new InvalidInputException("Wrong format! A Todo must be simple, just a description. " +
+                        "Do not use /from, /to, or /by. Formula: todo [description]");
             }
-            default -> {
-                String regex = "^(.+?)\\s+/from\\s+(.+?)\\s+/to\\s+(.+)$";
+            case "deadline" -> {
+                String regex = "^(.+?)\\s+/by\\s+((?!.*/from|.*/to|.*/by).+)$";
+                Pattern pattern = Pattern.compile(regex);
+                Matcher matcher = pattern.matcher(taskInfo);
+
+                if (matcher.matches()) {
+                    String description = matcher.group(1).trim();
+                    String by = matcher.group(2).trim();
+                    yield new Deadline(description, by);
+                }
+                throw new InvalidInputException("Wrong format! This deadline is not great. You need a /by flag with a date/time. " +
+                        "Formula: deadline [description] /by [date/time]");
+            }
+            case "event" -> {
+                String regex = "^(.+?)\\s+/from\\s+(.+?)\\s+/to\\s+((?!.*/from|.*/to|.*/by).+)$";
 
                 Pattern pattern = Pattern.compile(regex);
                 Matcher matcher = pattern.matcher(taskInfo);
 
-                if(matcher.matches()) {
+                if (matcher.matches()) {
                     String description = matcher.group(1).trim();
                     String from = matcher.group(2).trim();
                     String to = matcher.group(3).trim();
                     yield new Event(description, from, to);
                 }
-
-                throw new TrumpException("Event Format wrong...");
-
+                throw new InvalidInputException("Wrong format! Terrible event structure. You need both /from and /to flags. " +
+                        "Formula: event [description] /from [date/time] /to [date/time]");
             }
+            default -> throw new InvalidInputException("Fake news! This task type does not exist: " + taskType);
         };
         this.tasklist[this.taskIndex] = newTask;
+        this.taskIndex++;
         displayAddTask();
-        taskIndex++;
-}
+    }
 
     public void displayAddTask() {
         System.out.println("-------------------------------------------------------------------------------------------");
-        System.out.println("Message of adding task");
-        System.out.println("Added: " + tasklist[taskIndex].toString());
-        System.out.println("Message of how many task in list");
+        System.out.println("Adding a fantastic new task. It’s going to be a yuge success. Exceptional!");
+        System.out.println("Added: " + tasklist[taskIndex - 1].toString());
+        System.out.println("We have a tremendous list. A beautiful list of " + (this.taskIndex) + " tasks.");
+}
+
+    public void displayError(InvalidInputException e) {
+        System.out.println("-------------------------------------------------------------------------------------------");
+        System.out.println(e.getMessage());
+
     }
 
-    public void displayError(TrumpException e) {
-        System.out.println("-------------------------------------------------------------------------------------------");
-        System.err.println(e.getMessage());
+    public int parseTaskNumber(String taskNumberString) {
+        try {
+            int taskNumber = Integer.parseInt(taskNumberString.strip()) - 1;
+            if (taskNumber <= -1) {
+                throw new InvalidInputException("Total disaster! The task number cannot be 0 or less. " +
+                        "That is fake news, completely made up by bad input!"
+                );
+            }
+
+            if (taskNumber > this.taskIndex - 1) {
+                throw new InvalidInputException("Total disaster! The task number you entered is way too big.");
+            }
+            return taskNumber;
+        }
+        catch (NumberFormatException e) {
+            throw new InvalidInputException("Wrong! You have to enter a number, okay? " +
+                    "Entering letters is a complete and total failure. Nobody has ever seen a worse input, believe me!"
+            );
+        }
     }
 
 }
+

@@ -1,8 +1,6 @@
 package trump.task;
 
 public class Event extends Task {
-    protected String description;
-    protected boolean isDone;
     protected String to;
     protected String from;
 

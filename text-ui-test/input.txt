@@ -1,10 +1,36 @@
 todo
+todo eat banana
+todo eat banana /from
+todo eat banana /to
+todo eat banana /by
+todo eat banana /from monday /by tuesday
 deadline
+deadline /by
+deadline /by monday
+deadline eat banana monday
+deadline eat banana /by
+deadline eat banana /by monday /from
+deadline eat banana /by monday /from tuesday
+deadline eat banana /by monday
+deadline /from monday
 event
-todo
-deadline
-event
-todo
-deadline
-event
-
+event /from
+event /to
+event /from /to
+event eat banana
+event eat banana monday tuesday
+event eat banana /from /to
+event eat banana /from monday /to
+event eat banana /from /to tuesday
+event /from monday /to tuesday
+event /to monday /from tuesday
+event eat banana /from monday /to tuesday
+event eat banana /from monday /to tuesday /from hhh
+list
+mark
+unmark
+mark    2
+mark 3
+mark 4
+list
+mark 100
