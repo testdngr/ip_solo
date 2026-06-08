@@ -5,6 +5,7 @@ import trump.task.*;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.ArrayList;
 
 public class Trump {
 
@@ -14,13 +15,13 @@ public class Trump {
     }
 
     private final Scanner scanner;
-    private Task[] tasklist;
+    private ArrayList<Task> tasklist;
     private int taskIndex;
     private boolean isExit;
 
     public Trump() {
         this.scanner = new Scanner(System.in);
-        this.tasklist = new Task[100];
+        this.tasklist = new ArrayList<>();
         this.taskIndex = 0;
         this.isExit = false;
     }
@@ -55,12 +56,15 @@ public class Trump {
         String command = inputParts[0].toLowerCase();
 
         boolean needsArguments = switch (command) {
-            case "mark", "unmark", "todo", "deadline", "event" -> true;
+            case "mark", "unmark", "todo", "deadline", "event", "delete" -> true;
             default -> false;
         };
 
         if (needsArguments && inputParts.length < 2) {
             throw new InvalidInputException("Excuse me, you forgot the details for the '" + command + "' command. It's empty!");
+        }
+        else if (!needsArguments && inputParts.length == 2) {
+            throw new InvalidInputException("You’re typing too much. No arguments, no flags. Just the command, okay?");
         }
         return switch (command) {
             case "bye" -> {
@@ -82,6 +86,10 @@ public class Trump {
             }
             case "todo", "deadline", "event" -> {
                 addTask(command, inputParts[1]);
+                yield false;
+            }
+            case "delete" -> {
+                deleteTask(parseTaskNumber(inputParts[1]));
                 yield false;
             }
             default -> {
@@ -107,26 +115,37 @@ public class Trump {
 
     public void listTask() {
         System.out.println("-------------------------------------------------------------------------------------------");
-        System.out.println("Here are the tasks in your big league list:");
-        for (int i = 0; i < this.tasklist.length; i++) {
-            if (this.tasklist[i] != null) {
-                System.out.println(i + 1 + "." + this.tasklist[i].toString());
+        if (this.tasklist.isEmpty()) {
+            System.out.println("Zero tasks left! Empty list, total disaster. Add something to do, make the list great again!");
+        }
+        else {
+            System.out.println("Here are the tasks in your big league list:");
+            for (int i = 0; i < this.tasklist.size(); i++) {
+                if (this.tasklist.get(i) != null) {
+                    System.out.println(i + 1 + "." + this.tasklist.get(i).toString());
+                }
             }
         }
     }
 
     public void markTask(int index) {
-        this.tasklist[index].markAsDone();
+        if (this.tasklist.get(index).checkDone()) {
+            throw new InvalidInputException("Look, this task has already been marked! Everybody knows it’s already done, okay? Bigly marked!");
+        }
+        this.tasklist.get(index).markAsDone();
         System.out.println("-------------------------------------------------------------------------------------------");
         System.out.println("Total victory on that task. Nobody finishes like you do. Big league!");
-        System.out.println(this.tasklist[index].toString());
+        System.out.println(this.tasklist.get(index).toString());
     }
 
     public void unmarkTask(int index) {
-        this.tasklist[index].markAsNotDone();
+        if (!this.tasklist.get(index).checkDone()) {
+            throw new InvalidInputException("You want to unmark this task? Fake news! It’s already unmarked.");
+        }
+        this.tasklist.get(index).markAsNotDone();
         System.out.println("-------------------------------------------------------------------------------------------");
         System.out.println("Listen, I’m putting this back on the list because it’s not finished yet, but when we do it, it’s going to be tremendous!");
-        System.out.println(this.tasklist[index].toString());
+        System.out.println(this.tasklist.get(index).toString());
     }
 
     public void addTask(String taskType, String taskInfo) {
@@ -169,7 +188,7 @@ public class Trump {
             }
             default -> throw new InvalidInputException("Fake news! This task type does not exist: " + taskType);
         };
-        this.tasklist[this.taskIndex] = newTask;
+        this.tasklist.add(newTask);
         this.taskIndex++;
         displayAddTask();
     }
@@ -177,7 +196,7 @@ public class Trump {
     public void displayAddTask() {
         System.out.println("-------------------------------------------------------------------------------------------");
         System.out.println("Adding a fantastic new task. It’s going to be a yuge success. Exceptional!");
-        System.out.println("Added: " + tasklist[taskIndex - 1].toString());
+        System.out.println("Added: " + tasklist.get(taskIndex - 1).toString());
         System.out.println("We have a tremendous list. A beautiful list of " + (this.taskIndex) + " tasks.");
 }
 
@@ -206,6 +225,16 @@ public class Trump {
                     "Entering letters is a complete and total failure. Nobody has ever seen a worse input, believe me!"
             );
         }
+    }
+
+    public void deleteTask(int index) {
+        System.out.println("-------------------------------------------------------------------------------------------");
+        System.out.println("We are deleting this task. Total cancellation. It’s gone, folks!");
+        System.out.println(this.tasklist.get(index).toString());
+        this.tasklist.remove(index);
+        this.taskIndex--;
+        System.out.println("Number of tasks left: " + this.tasklist.size() + ". We're thinning the crowd, making the list great again!");
+
     }
 
 }
