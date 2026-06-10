@@ -14,6 +14,21 @@ public class Trump {
         trump.run();
     }
 
+    enum Command {
+        BYE, LIST, MARK, UNMARK, TODO, DEADLINE, EVENT, DELETE
+    }
+
+    enum RegexPattern {
+        DeadlineRegex("^(.+?)\\s+/by\\s+((?!.*/from|.*/to|.*/by).+)$"),
+        EventRegex("^(.+?)\\s+/from\\s+(.+?)\\s+/to\\s+((?!.*/from|.*/to|.*/by).+)$");
+
+        public final String regex;
+
+        RegexPattern(String regex) {
+            this.regex = regex;
+        }
+    }
+
     private final Scanner scanner;
     private ArrayList<Task> tasklist;
     private int taskIndex;
@@ -159,7 +174,7 @@ public class Trump {
                         "Do not use /from, /to, or /by. Formula: todo [description]");
             }
             case "deadline" -> {
-                String regex = "^(.+?)\\s+/by\\s+((?!.*/from|.*/to|.*/by).+)$";
+                String regex = RegexPattern.DeadlineRegex.regex;
                 Pattern pattern = Pattern.compile(regex);
                 Matcher matcher = pattern.matcher(taskInfo);
 
@@ -172,7 +187,7 @@ public class Trump {
                         "Formula: deadline [description] /by [date/time]");
             }
             case "event" -> {
-                String regex = "^(.+?)\\s+/from\\s+(.+?)\\s+/to\\s+((?!.*/from|.*/to|.*/by).+)$";
+                String regex = RegexPattern.EventRegex.regex;
 
                 Pattern pattern = Pattern.compile(regex);
                 Matcher matcher = pattern.matcher(taskInfo);
