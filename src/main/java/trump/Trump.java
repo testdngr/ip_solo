@@ -31,13 +31,11 @@ public class Trump {
 
     private final Scanner scanner;
     private ArrayList<Task> tasklist;
-    private int taskIndex;
     private boolean isExit;
 
     public Trump() {
         this.scanner = new Scanner(System.in);
         this.tasklist = new ArrayList<>();
-        this.taskIndex = 0;
         this.isExit = false;
     }
 
@@ -68,10 +66,10 @@ public class Trump {
 
     public boolean processInput(String userInput) {
         String[] inputParts = userInput.strip().split(" ", 2);
-        String command = inputParts[0].toLowerCase();
+        Command command = cmdToEnum(inputParts[0].trim());
 
         boolean needsArguments = switch (command) {
-            case "mark", "unmark", "todo", "deadline", "event", "delete" -> true;
+            case MARK, UNMARK, TODO, DEADLINE, EVENT, DELETE -> true;
             default -> false;
         };
 
@@ -82,34 +80,29 @@ public class Trump {
             throw new InvalidInputException("You’re typing too much. No arguments, no flags. Just the command, okay?");
         }
         return switch (command) {
-            case "bye" -> {
+            case BYE-> {
                 displayGoodbye();
                 this.scanner.close();
                 yield true;
             }
-            case "list" -> {
+            case LIST -> {
                 listTask();
                 yield false;
             }
-            case "mark" -> {
+            case MARK -> {
                 markTask(parseTaskNumber(inputParts[1]));
                 yield false;
             }
-            case "unmark" -> {
+            case UNMARK-> {
                 unmarkTask(parseTaskNumber(inputParts[1]));
                 yield false;
             }
-            case "todo", "deadline", "event" -> {
+            case TODO, DEADLINE, EVENT -> {
                 addTask(command, inputParts[1]);
                 yield false;
             }
-            case "delete" -> {
+            case DELETE-> {
                 deleteTask(parseTaskNumber(inputParts[1]));
-                yield false;
-            }
-            default -> {
-                System.out.println("-------------------------------------------------------------------------------------------");
-                System.out.println("I don't know what \"" + command + "\" is. Nobody knows.");
                 yield false;
             }
         };
@@ -120,6 +113,15 @@ public class Trump {
         System.out.println("-------------------------------------------------------------------------------------------");
         String userInput = this.scanner.nextLine();
         return userInput;
+    }
+
+    public Command cmdToEnum(String cmd) {
+        try {
+            return Command.valueOf(cmd.toUpperCase());
+        }
+        catch (IllegalArgumentException e) {
+            throw new InvalidInputException("I don't know what \"" + cmd + "\" is. Nobody knows.");
+        }
     }
 
     public static void displayGoodbye() {
@@ -163,9 +165,9 @@ public class Trump {
         System.out.println(this.tasklist.get(index).toString());
     }
 
-    public void addTask(String taskType, String taskInfo) {
+    public void addTask(Command taskType, String taskInfo) {
         Task newTask = switch (taskType) {
-            case "todo" -> {
+            case TODO -> {
                 String checkFlags = taskInfo.toLowerCase();
                 if (!checkFlags.contains("/from") && !checkFlags.contains("/to") && !checkFlags.contains("/by")) {
                     yield new Todo(taskInfo);
@@ -173,7 +175,7 @@ public class Trump {
                 throw new InvalidInputException("Wrong format! A Todo must be simple, just a description. " +
                         "Do not use /from, /to, or /by. Formula: todo [description]");
             }
-            case "deadline" -> {
+            case DEADLINE -> {
                 String regex = RegexPattern.DeadlineRegex.regex;
                 Pattern pattern = Pattern.compile(regex);
                 Matcher matcher = pattern.matcher(taskInfo);
@@ -186,7 +188,7 @@ public class Trump {
                 throw new InvalidInputException("Wrong format! This deadline is not great. You need a /by flag with a date/time. " +
                         "Formula: deadline [description] /by [date/time]");
             }
-            case "event" -> {
+            case EVENT-> {
                 String regex = RegexPattern.EventRegex.regex;
 
                 Pattern pattern = Pattern.compile(regex);
@@ -204,15 +206,14 @@ public class Trump {
             default -> throw new InvalidInputException("Fake news! This task type does not exist: " + taskType);
         };
         this.tasklist.add(newTask);
-        this.taskIndex++;
         displayAddTask();
     }
 
     public void displayAddTask() {
         System.out.println("-------------------------------------------------------------------------------------------");
         System.out.println("Adding a fantastic new task. It’s going to be a yuge success. Exceptional!");
-        System.out.println("Added: " + tasklist.get(taskIndex - 1).toString());
-        System.out.println("We have a tremendous list. A beautiful list of " + (this.taskIndex) + " tasks.");
+        System.out.println("Added: " + this.tasklist.get(this.tasklist.size() - 1).toString());
+        System.out.println("We have a tremendous list. A beautiful list of " + (this.tasklist.size()) + " tasks.");
 }
 
     public void displayError(InvalidInputException e) {
@@ -230,7 +231,7 @@ public class Trump {
                 );
             }
 
-            if (taskNumber > this.taskIndex - 1) {
+            if (taskNumber > this.tasklist.size() - 1) {
                 throw new InvalidInputException("Total disaster! The task number you entered is way too big.");
             }
             return taskNumber;
@@ -247,10 +248,7 @@ public class Trump {
         System.out.println("We are deleting this task. Total cancellation. It’s gone, folks!");
         System.out.println(this.tasklist.get(index).toString());
         this.tasklist.remove(index);
-        this.taskIndex--;
         System.out.println("Number of tasks left: " + this.tasklist.size() + ". We're thinning the crowd, making the list great again!");
-
     }
-
 }
 
